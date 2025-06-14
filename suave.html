@@ -62,6 +62,7 @@
       color: white;
       border: none;
       transition: background 0.3s ease;
+      cursor: pointer;
     }
 
     button:hover {
@@ -79,63 +80,73 @@
 <body>
   <div class="container">
     <h1>SuaveSave - SugarCube Save Editor</h1>
-    <p>🔐 لتحرير ملفات حفظ ألعاب SugarCube: حمّل ملفك، عدّل ما تريد، ثم احفظه مجددًا.</p>
+    <p>🔧 To use this tool: Load your save file, edit it, and re-save it encrypted!</p>
 
     <table>
       <tr>
-        <td><strong>📂 اختر ملف الحفظ:</strong></td>
+        <td><strong>📂 Select a save file:</strong></td>
         <td><input type="file" id="input_file"></td>
-        <td><button onclick="loadFileAsText()">📤 تحميل الملف</button></td>
+        <td><button onclick="loadFileAsText()">📤 Load File</button></td>
       </tr>
       <tr>
-        <td colspan="3"><strong>✏️ عدل ملفك:</strong></td>
+        <td colspan="3"><strong>📝 Edit your save content:</strong></td>
       </tr>
       <tr>
         <td colspan="3">
-          <textarea id="textbox" placeholder="سيظهر هنا محتوى الملف بعد التحميل..."></textarea>
+          <textarea id="textbox" placeholder="Your save content will appear here..."></textarea>
         </td>
       </tr>
       <tr>
-        <td><strong>💾 احفظ باسم:</strong></td>
+        <td><strong>💾 Save as:</strong></td>
         <td><input type="text" id="output_file" value="suave.save"></td>
-        <td><button onclick="saveTextAsFile()">📥 حفظ الملف (مشفر)</button></td>
+        <td><button onclick="saveTextAsFile()">📥 Save File (Encrypted)</button></td>
       </tr>
     </table>
 
-    <div class="footer">🛠️ تم التطوير بواسطة مطور شغوف بالألعاب التفاعلية | إصدار SuaveSave</div>
+    <div class="footer">🛠️ Developed with ❤️ for interactive fiction fans | SuaveSave Editor</div>
   </div>
 
   <script>
+    // Save the edited text as compressed (Base64) file
     function saveTextAsFile() {
-      var textToSave = LZString.compressToBase64(document.getElementById("textbox").value);
-      var textToSaveAsBlob = new Blob([textToSave], { type: "text/plain" });
-      var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
-      var fileNameToSaveAs = document.getElementById("output_file").value;
+      const originalText = document.getElementById("textbox").value;
+      const compressedText = LZString.compressToBase64(originalText);
+      const blob = new Blob([compressedText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const fileName = document.getElementById("output_file").value;
 
-      var downloadLink = document.createElement("a");
-      downloadLink.download = fileNameToSaveAs;
-      downloadLink.href = textToSaveAsURL;
+      const downloadLink = document.createElement("a");
+      downloadLink.download = fileName;
+      downloadLink.href = url;
       downloadLink.style.display = "none";
       document.body.appendChild(downloadLink);
       downloadLink.click();
     }
 
+    // Load and decompress a save file into the textarea
     function loadFileAsText() {
-      var fileToLoad = document.getElementById("input_file").files[0];
-      if (!fileToLoad) return alert("📁 الرجاء اختيار ملف أولًا.");
+      const fileInput = document.getElementById("input_file");
+      const file = fileInput.files[0];
 
-      var fileReader = new FileReader();
-      fileReader.onload = function (event) {
-        var textFromFileLoaded = event.target.result;
-        var decompressed = LZString.decompressFromBase64(textFromFileLoaded);
+      if (!file) {
+        alert("Please select a file first.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const loadedText = event.target.result;
+        const decompressed = LZString.decompressFromBase64(loadedText);
+
         if (decompressed === null) {
-          alert("❗ تعذر فك ضغط الملف. تأكد أنه ملف حفظ صالح من لعبة SugarCube.");
+          alert("⚠️ Unable to decompress file. Make sure it’s a valid SugarCube save file.");
         } else {
           document.getElementById("textbox").value = decompressed;
-          document.getElementById("output_file").value = "suave." + fileToLoad.name;
+          document.getElementById("output_file").value = "suave." + file.name;
         }
       };
-      fileReader.readAsText(fileToLoad, "UTF-8");
+
+      reader.readAsText(file, "UTF-8");
     }
   </script>
 </body>
